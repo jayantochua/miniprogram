@@ -1,17 +1,665 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <meta charset="utf-8">
-  <title>Telegram WebApp Test</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Mini App InitData Viewer</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            margin: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .info-card p {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .data-section {
+            margin-bottom: 25px;
+        }
+
+        .data-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .textarea-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            line-height: 1.4;
+            transition: border-color 0.3s;
+            background: #fafafa;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: #5a67d8;
+        }
+
+        .copy-btn:active {
+            transform: translateY(1px);
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            opacity: 1;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            opacity: 1;
+        }
+
+        .parsed-data {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .parsed-data h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .data-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .data-item label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-item .value {
+            font-weight: 500;
+            color: #333;
+            word-break: break-all;
+        }
+
+        .toggle-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .toggle-btn:hover {
+            background: #38a169;
+        }
+
+        .toggle-btn.secondary {
+            background: #a0aec0;
+        }
+
+        .toggle-btn.secondary:hover {
+            background: #718096;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .bot-token-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .bot-token-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .token-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-bottom: 10px;
+            background: white;
+        }
+
+        .verify-btn {
+            background: #ed8936;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .verify-btn:hover {
+            background: #dd6b20;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>Telegram WebApp InitData</h2>
-  <pre id="out"></pre>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Telegram Mini App InitData Viewer</h1>
+            <p>Ambil dan salin data initData dari Telegram WebApp</p>
+        </div>
+        
+        <div class="content">
+            <div class="info-card">
+                <h3>📋 Cara Penggunaan:</h3>
+                <p>1. Buka halaman ini di dalam Telegram Mini App<br>
+                   2. Data akan otomatis terisi di kotak teks<br>
+                   3. Klik "Copy to Clipboard" untuk menyalin<br>
+                   4. Gunakan untuk testing verifikasi di backend</p>
+            </div>
+            
+            <div class="data-section">
+                <label for="initDataText">Telegram.WebApp.initData (RAW):</label>
+                <div class="textarea-container">
+                    <textarea id="initDataText" readonly placeholder="Data akan muncul otomatis saat dibuka di Telegram Mini App..."></textarea>
+                    <button class="copy-btn" onclick="copyToClipboard()">
+                        📋 Copy to Clipboard
+                    </button>
+                </div>
+                <div id="copyStatus" class="status"></div>
+            </div>
+            
+            <div class="data-section">
+                <label for="initDataUnsafeText">Telegram.WebApp.initDataUnsafe (Parsed JSON):</label>
+                <div class="textarea-container">
+                    <textarea id="initDataUnsafeText" readonly placeholder="Data parsed JSON akan muncul di sini..."></textarea>
+                    <button class="copy-btn" onclick="copyUnsafeToClipboard()">
+                        📋 Copy JSON
+                    </button>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="toggle-btn" onclick="toggleParsedData()">
+                    👁️ Tampilkan Data Detail
+                </button>
+                <button class="toggle-btn secondary" onclick="refreshData()">
+                    🔄 Refresh Data
+                </button>
+            </div>
+            
+            <div id="parsedData" class="parsed-data">
+                <h3>🔍 Data yang Sudah Diparse:</h3>
+                <div class="data-grid" id="dataGrid">
+                    <!-- Data akan diisi oleh JavaScript -->
+                </div>
+            </div>
+            
+            <div class="bot-token-section">
+                <h3>🔐 Verifikasi Hash (Testing):</h3>
+                <input type="password" id="botToken" class="token-input" placeholder="Masukkan bot token untuk verifikasi...">
+                <button class="verify-btn" onclick="verifyHash()">
+                    ✅ Verifikasi Hash
+                </button>
+                <div id="verificationResult" class="status"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Digunakan untuk debugging dan testing Telegram Mini Apps | 
+           <a href="https://core.telegram.org/bots/webapps" target="_blank">Dokumentasi Resmi</a></p>
+    </div>
 
-  <script>
-    document.getElementById('out').textContent =
-      Telegram.WebApp.initData;
-  </script>
+    <script>
+        // Global variables
+        let initDataRaw = '';
+        let initDataUnsafe = null;
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInitData();
+            
+            // Auto-refresh every 10 seconds
+            setInterval(loadInitData, 10000);
+        });
+        
+        function loadInitData() {
+            try {
+                // Check if running in Telegram WebApp
+                if (typeof window.Telegram !== 'undefined' && 
+                    typeof window.Telegram.WebApp !== 'undefined') {
+                    
+                    // Get raw initData
+                    initDataRaw = window.Telegram.WebApp.initData || '';
+                    document.getElementById('initDataText').value = initDataRaw;
+                    
+                    // Get parsed unsafe data
+                    initDataUnsafe = window.Telegram.WebApp.initDataUnsafe || {};
+                    
+                    // Format JSON nicely
+                    const formattedJson = JSON.stringify(initDataUnsafe, null, 2);
+                    document.getElementById('initDataUnsafeText').value = formattedJson;
+                    
+                    // Update parsed data display
+                    updateParsedData();
+                    
+                    // Show success message on first load
+                    if (!window.dataLoaded) {
+                        showStatus('✅ Data berhasil dimuat dari Telegram WebApp!', 'success');
+                        window.dataLoaded = true;
+                    }
+                } else {
+                    // Not running in Telegram
+                    const fakeData = generateFakeInitData();
+                    document.getElementById('initDataText').value = fakeData;
+                    document.getElementById('initDataUnsafeText').value = 
+                        '// Buka halaman ini di dalam Telegram Mini App untuk mendapatkan data asli\n' +
+                        JSON.stringify({
+                            note: "Not running in Telegram WebApp",
+                            timestamp: new Date().toISOString(),
+                            user: null
+                        }, null, 2);
+                    
+                    showStatus('⚠️ Buka di Telegram Mini App untuk data asli', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading initData:', error);
+                showStatus('❌ Error: ' + error.message, 'error');
+            }
+        }
+        
+        function generateFakeInitData() {
+            // Generate fake data for testing outside Telegram
+            const fakeUser = {
+                id: Math.floor(Math.random() * 1000000000),
+                first_name: "Test",
+                last_name: "User",
+                username: "testuser",
+                language_code: "en",
+                is_premium: false,
+                allows_write_to_pm: true
+            };
+            
+            const params = new URLSearchParams({
+                query_id: 'FAKE_' + Math.random().toString(36).substr(2, 10),
+                user: JSON.stringify(fakeUser),
+                auth_date: Math.floor(Date.now() / 1000),
+                hash: 'fake_hash_' + Math.random().toString(36).substr(2, 16)
+            });
+            
+            return params.toString();
+        }
+        
+        function updateParsedData() {
+            if (!initDataUnsafe) return;
+            
+            const dataGrid = document.getElementById('dataGrid');
+            dataGrid.innerHTML = '';
+            
+            // Function to add data item
+            const addDataItem = (label, value, isJson = false) => {
+                if (value === undefined || value === null || value === '') return;
+                
+                const item = document.createElement('div');
+                item.className = 'data-item';
+                
+                let displayValue = value;
+                if (isJson) {
+                    displayValue = JSON.stringify(value, null, 2);
+                } else if (typeof value === 'object') {
+                    displayValue = JSON.stringify(value);
+                }
+                
+                item.innerHTML = `
+                    <label>${label}</label>
+                    <div class="value">${escapeHtml(displayValue)}</div>
+                `;
+                
+                dataGrid.appendChild(item);
+            };
+            
+            // Add user data
+            if (initDataUnsafe.user) {
+                const user = initDataUnsafe.user;
+                addDataItem('User ID', user.id);
+                addDataItem('First Name', user.first_name);
+                addDataItem('Last Name', user.last_name);
+                addDataItem('Username', user.username);
+                addDataItem('Language', user.language_code);
+                addDataItem('Is Premium', user.is_premium ? 'Yes' : 'No');
+                addDataItem('Can Write to PM', user.allows_write_to_pm ? 'Yes' : 'No');
+            }
+            
+            // Add chat data
+            if (initDataUnsafe.chat) {
+                const chat = initDataUnsafe.chat;
+                addDataItem('Chat ID', chat.id);
+                addDataItem('Chat Type', chat.type);
+                addDataItem('Chat Title', chat.title);
+                addDataItem('Chat Username', chat.username);
+            }
+            
+            // Add other fields
+            addDataItem('Query ID', initDataUnsafe.query_id);
+            addDataItem('Chat Type', initDataUnsafe.chat_type);
+            addDataItem('Chat Instance', initDataUnsafe.chat_instance);
+            addDataItem('Start Param', initDataUnsafe.start_param);
+            
+            // Format auth date
+            if (initDataUnsafe.auth_date) {
+                const date = new Date(initDataUnsafe.auth_date * 1000);
+                addDataItem('Auth Date', `${initDataUnsafe.auth_date} (${date.toLocaleString()})`);
+            }
+            
+            addDataItem('Can Send After', initDataUnsafe.can_send_after);
+            
+            // Add hash
+            if (initDataRaw) {
+                const params = new URLSearchParams(initDataRaw);
+                addDataItem('Hash', params.get('hash'));
+            }
+            
+            // Add platform info if available
+            if (window.Telegram?.WebApp?.platform) {
+                addDataItem('Platform', window.Telegram.WebApp.platform);
+                addDataItem('Version', window.Telegram.WebApp.version);
+                addDataItem('Color Scheme', window.Telegram.WebApp.colorScheme);
+            }
+        }
+        
+        function copyToClipboard() {
+            const textarea = document.getElementById('initDataText');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile devices
+            
+            try {
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    showStatus('✅ initData berhasil disalin ke clipboard!', 'success');
+                }).catch(err => {
+                    // Fallback for older browsers
+                    document.execCommand('copy');
+                    showStatus('✅ initData berhasil disalin!', 'success');
+                });
+            } catch (err) {
+                showStatus('❌ Gagal menyalin: ' + err.message, 'error');
+            }
+        }
+        
+        function copyUnsafeToClipboard() {
+            const textarea = document.getElementById('initDataUnsafeText');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            
+            try {
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    showStatus('✅ JSON berhasil disalin ke clipboard!', 'success');
+                });
+            } catch (err) {
+                showStatus('❌ Gagal menyalin JSON', 'error');
+            }
+        }
+        
+        function toggleParsedData() {
+            const parsedData = document.getElementById('parsedData');
+            const btn = document.querySelector('.toggle-btn');
+            
+            if (parsedData.style.display === 'block') {
+                parsedData.style.display = 'none';
+                btn.textContent = '👁️ Tampilkan Data Detail';
+            } else {
+                parsedData.style.display = 'block';
+                btn.textContent = '🙈 Sembunyikan Data Detail';
+                updateParsedData();
+            }
+        }
+        
+        function refreshData() {
+            showStatus('🔄 Memuat ulang data...', '');
+            setTimeout(() => {
+                loadInitData();
+                showStatus('✅ Data diperbarui!', 'success');
+            }, 500);
+        }
+        
+        async function verifyHash() {
+            const token = document.getElementById('botToken').value.trim();
+            const resultDiv = document.getElementById('verificationResult');
+            
+            if (!token) {
+                showStatus('❌ Masukkan bot token terlebih dahulu', 'error', resultDiv);
+                return;
+            }
+            
+            if (!initDataRaw) {
+                showStatus('❌ Tidak ada initData untuk diverifikasi', 'error', resultDiv);
+                return;
+            }
+            
+            showStatus('🔄 Memverifikasi...', '', resultDiv);
+            
+            try {
+                // Send to backend for verification
+                const response = await fetch('/api/verify-telegram-init', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        initData: initDataRaw,
+                        botToken: token
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.valid) {
+                        showStatus('✅ Hash valid! Data berasal dari Telegram', 'success', resultDiv);
+                    } else {
+                        showStatus('❌ Hash tidak valid. Token mungkin salah', 'error', resultDiv);
+                    }
+                } else {
+                    showStatus('❌ Error dari server: ' + response.status, 'error', resultDiv);
+                }
+            } catch (error) {
+                // If backend not available, show client-side verification note
+                showStatus('⚠️ Backend tidak tersedia. Verifikasi harus dilakukan di server', 'error', resultDiv);
+                console.log('Untuk verifikasi, kirim data ke backend dengan token:', token);
+            }
+        }
+        
+        function showStatus(message, type, element = null) {
+            const statusDiv = element || document.getElementById('copyStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + (type || '');
+            
+            // Auto-hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.className = 'status';
+                    statusDiv.textContent = '';
+                }, 3000);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Initialize
+        loadInitData();
+    </script>
 </body>
 </html>
